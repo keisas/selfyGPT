@@ -21,7 +21,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            cd ~/yoneyamaGPT
+            cd ~/selfyGPT
             git pull origin main
 
             echo "${{ secrets.ENV_FILE_CONTENT }}" > ./.env

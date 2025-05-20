@@ -1,4 +1,4 @@
-# yoneyamaGPT（バックエンド）
+# selfyGPT（バックエンド）
 
 FastAPI + FAISS による、RAGベース質問応答API。
 

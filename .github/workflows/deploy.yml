@@ -23,8 +23,11 @@ jobs:
           script: |
             cd ~/yoneyamaGPT
             git pull origin main
+
+            echo "${{ secrets.ENV_FILE_CONTENT }}" > ./.env
+
             cd backend
             docker build -t selfy-backend .
-            docker stop sefly-backend || true && docker rm selfy-backend || true
-            docker run -d --env-file .env -p 8000:8000 --name selfy-backend selfy-backend
+            docker stop selfy-backend || true && docker rm selfy-backend || true
+            docker run -d --env-file ../.env -p 8000:8000 --name selfy-backend selfy-backend
             docker image prune -f

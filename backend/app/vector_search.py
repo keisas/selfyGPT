@@ -37,7 +37,8 @@ def search_similar_questions(query: str, top_k: int = 5) -> list:
 
     return results
 
-def generate_answer(query: str, similar_QAs: list) -> str:
+
+def construct_messages(query: str, similar_QAs: list) :
     # 類似QAからプロンプト本文生成
     similar_text = "\n".join(
         [f"{i+1}. 「{qa['question']}」→ {qa['answer']}" for i, qa in enumerate(similar_QAs)]
@@ -53,12 +54,9 @@ def generate_answer(query: str, similar_QAs: list) -> str:
     文脈を考慮して、1〜2文でわかりやすく自然な文章にまとめてください。
     """
 
-    # OpenAI Chat API へ送信
-    response = openai.ChatCompletion.create(
-        model="gpt-4",  # or "gpt-3.5-turbo"
-        messages=[
-            {
-            "role": "system",
+    return [
+        {
+            "role": "system", 
             "content": (
                 "あなたは『YoneyamaGPT』という名前のアシスタントです。"
                 "ユーザーの質問に対して、過去のQAデータをもとに自然で正確な日本語で回答します。"
@@ -66,8 +64,17 @@ def generate_answer(query: str, similar_QAs: list) -> str:
                 "常に検索結果の文脈を踏まえて回答することを心がけてください。"
             )
         },
-            {"role": "user", "content": prompt}
-        ]
+        {
+            "role": "user",
+            "content": prompt
+        }
+    ]
+
+def generate_answer(messages, model="gpt-4") -> str:
+
+    response = openai.ChatCompletion.create(
+        model=model,
+        messages=messages
     )
 
     generated_answer = response["choices"][0]["message"]["content"]

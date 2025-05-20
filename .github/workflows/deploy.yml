@@ -24,7 +24,7 @@ jobs:
             cd ~/yoneyamaGPT
             git pull origin main
             cd backend
-            docker build -t yoneyama-backend .
-            docker stop backend || true && docker rm backend || true
-            docker run -d --env-file .env -p 8000:8000 --name backend yoneyama-backend
+            docker build -t selfy-backend .
+            docker stop sefly-backend || true && docker rm selfy-backend || true
+            docker run -d --env-file .env -p 8000:8000 --name selfy-backend selfy-backend
             docker image prune -f

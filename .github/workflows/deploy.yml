@@ -9,28 +9,22 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    env:
-      HOST: ${{ vars.INSTANCE_IP }}
-
     steps:
-      - name: Checkout source
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Add SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H $HOST >> ~/.ssh/known_hosts
-
-      - name: Deploy to EC2
-        run: |
-          ssh ubuntu@$HOST << 'EOF'
+      - name: Deploy via SSH to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
             cd ~/yoneyamaGPT
             git pull origin main
-            cd ./backend
+            cd backend
             docker build -t yoneyama-backend .
             docker stop backend || true && docker rm backend || true
             docker run -d --env-file .env -p 8000:8000 --name backend yoneyama-backend
             docker image prune -f
-          EOF

@@ -23,17 +23,18 @@ def get_embedding(text: str) -> np.ndarray:
     return np.array(response["data"][0]["embedding"], dtype=np.float32)
 
 def search_similar_questions(query: str, top_k: int = 5) -> list:
-    def matadata_to_dict(metadata: str) -> dict:
+    def matadata_to_dict(similarity: float, metadata: str) -> dict:
         item = metadata.split("|")
         return {
+            "similarity": similarity,
             "category": item[0],
             "question": item[1],
             "answer": item[2],
         }
 
     embedding = get_embedding(query)
-    _, I = index.search(np.array([embedding]), top_k)
-    results = [matadata_to_dict(metadata[idx]) for idx in I[0]]
+    similarity, I = index.search(np.array([embedding]), top_k)
+    results = [matadata_to_dict(similarity, metadata[idx]) for idx in I[0]]
 
     return results
 
@@ -41,7 +42,7 @@ def search_similar_questions(query: str, top_k: int = 5) -> list:
 def construct_messages(query: str, similar_QAs: list) :
     # 類似QAからプロンプト本文生成
     similar_text = "\n".join(
-        [f"{i+1}. 「{qa['question']}」→ {qa['answer']}" for i, qa in enumerate(similar_QAs)]
+        [f"{i+1}. 一致度：{qa['similarity']} 「{qa['question']}」→ {qa['answer']}" for i, qa in enumerate(similar_QAs)]
     )
 
     prompt = f"""
@@ -51,15 +52,22 @@ def construct_messages(query: str, similar_QAs: list) :
     {similar_text}
 
     --- 指示 ---
-    文脈を考慮して、1〜2文でわかりやすく自然な文章にまとめてください。
+    文脈を考慮して、1 ~ 4 文でわかりやすく自然な文章にまとめてください。
     """
 
     return [
         {
             "role": "system", 
             "content": (
-                "あなたは『YoneyamaGPT』という名前のアシスタントです。"
+                "あなたは『YoneyamaGPT』という名前のアシスタントです、ですが、米山として回答して下さい。"
                 "ユーザーの質問に対して、過去のQAデータをもとに自然で正確な日本語で回答します。"
+                "QAデータにはユーザの質問との一致度の情報も含まれています、各質問の一致度を考慮して、"
+                "最も関連性の高い情報を優先して回答してください。"
+                "ただし、すべてのOAとの類似度が低い場合や、"
+                "質問に対する明確な回答がない場合は、"
+                "「Q&Aに情報がないため、その件についてはお答えできません」と返答してください。それ以外の回答はしないでください。"
+                "また、回答は必ず丁寧な日本語（敬語）で行ってください。"
+                "また、質問ありがとうございますなどの一文は省略してください。"
                 "YoneyamaGPTはRAG（Retrieval-Augmented Generation）構成で動作しており、"
                 "常に検索結果の文脈を踏まえて回答することを心がけてください。"
             )

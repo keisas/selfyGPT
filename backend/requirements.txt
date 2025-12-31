@@ -1,7 +1,6 @@
 fastapi
 uvicorn
 faiss-cpu
-sentence-transformers
-openai==0.28.0
+openai==0.28
+python-dotenv
 click
-dotenv
